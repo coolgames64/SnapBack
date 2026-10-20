@@ -4,4 +4,4 @@
 
 Browser checks verify sign-in, account creation and reset modes, pending-setup messaging, disabled credential fields before configuration and mobile layout. The prior upload/save/reload check remains valid; photo storage and camera code are unchanged apart from the AI account-status message.
 
-The production build uses Sites packaging. **Real registration, email delivery, reset and authenticated AI remain unverified until the owner connects/configures Supabase.** Published forms must not be described as activated while setup is pending. Groq previously completed a real identical-photo comparison; this release uses deterministic fixtures.
+The production build uses Sites packaging. **Real registration, email delivery, reset and authenticated AI remain unverified until dashboard URL/email configuration is completed and the ready flag is enabled.** Published forms must not be described as activated while setup is pending. Groq previously completed a real identical-photo comparison; this release uses deterministic fixtures.

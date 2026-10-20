@@ -6,7 +6,7 @@ export function safeReturnPath(value='/'){
  try{const url=new URL(value,'https://snapback.local');if(url.origin!=='https://snapback.local'||url.pathname!=='/')return '/';return url.pathname+url.search+url.hash;}catch{return '/';}
 }
 export function emailAuthReady(env={}){
- return /^https:\/\/[a-z0-9]{10,40}\.supabase\.co\/?$/.test(env.SUPABASE_URL||'')&&/^sb_publishable_[A-Za-z0-9_-]+$/.test(env.SUPABASE_PUBLISHABLE_KEY||'');
+ return env.SUPABASE_AUTH_READY==='true'&&/^https:\/\/[a-z0-9]{10,40}\.supabase\.co\/?$/.test(env.SUPABASE_URL||'')&&/^sb_publishable_[A-Za-z0-9_-]+$/.test(env.SUPABASE_PUBLISHABLE_KEY||'');
 }
 export function authUsageStore(db){
  if(!db)return null;

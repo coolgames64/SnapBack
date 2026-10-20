@@ -28,7 +28,7 @@ The existing full app is hosted on Sites. It depends on trusted sign-in and D1 s
 
 ## Sign-in and your own uploads
 
-Open `/login` for separate email/password accounts secured by Supabase. Sign-in, account creation, email verification, reset emails, password updates and browser sign-out are implemented with the official `@supabase/ssr` SDK. ChatGPT identity headers no longer authenticate an email account. **Activation requires the owner's Supabase project and email-delivery setup; until configured, forms are disabled with an honest setup message.** See [account setup](docs/EMAIL-ACCOUNTS.md).
+Open `/login` for separate email/password accounts secured by Supabase. Sign-in, account creation, email verification, reset emails, password updates and browser sign-out are implemented with the official `@supabase/ssr` SDK. ChatGPT identity headers no longer authenticate an email account. **The free SnapBack Supabase project is created and its connection is saved. Confirmation URLs and email delivery must be configured before setting `SUPABASE_AUTH_READY=true`; until then, forms stay disabled with an honest setup message.** See [account setup](docs/EMAIL-ACCOUNTS.md).
 
 The server verifies identity with Supabase's Auth server before AI access. Cookies are HttpOnly, Secure on HTTPS, SameSite=Lax and never cached. Passwords and tokens are never returned to browser scripts or stored in the photo library. Account actions require same-origin requests, bounded JSON, provider validation and hashed-email usage counters in D1. Local preview ignores identity headers and also requires the configured backend and D1 binding for account activation.
 
