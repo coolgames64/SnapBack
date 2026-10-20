@@ -1,9 +1,9 @@
-// Local UI preview has no trusted identity; cloud AI needs hosted sign-in.
+// Local preview supports configured Supabase accounts; identity headers are ignored.
 import http from 'node:http';
 import {readFile, stat} from 'node:fs/promises';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import path from 'node:path';
-import {createAuthHandler} from './auth.mjs';
+import {createAuthContext} from './auth.mjs';
 import {createAIHandler} from './ai-api.mjs';
 
 const root=path.resolve(fileURLToPath(new URL('./client/',import.meta.url)));
@@ -19,12 +19,17 @@ export function createServer() {
   return http.createServer(async(request,response)=>{
     try{
       const url=new URL(request.url,'http://localhost');
-      if(url.pathname.startsWith('/api/auth/')||url.pathname.startsWith('/api/billing/')||url.pathname.startsWith('/api/ai/')){
-        // The simple local server deliberately has no trusted identity; headers from local clients are never trusted.
-        const webRequest=new Request(`http://${request.headers.host}${request.url}`,{method:request.method,headers:request.headers});
-        const result=await createAuthHandler({authAvailable:false})(webRequest)||await createAIHandler({env:process.env,user:null,authAvailable:false})(webRequest);
+      if(url.pathname==='/auth/complete'||url.pathname.startsWith('/api/auth/')||url.pathname.startsWith('/api/billing/')||url.pathname.startsWith('/api/ai/')){
+        const options={method:request.method,headers:request.headers};
+        if(!['GET','HEAD'].includes(request.method)){options.body=request;options.duplex='half';}
+        const webRequest=new Request(`http://${request.headers.host}${request.url}`,options);
+        const auth=createAuthContext({request:webRequest,env:process.env});
+        let result=await auth.handle();
+        if(!result){const user=await auth.getUser();result=await createAIHandler({env:process.env,user,authAvailable:auth.configured})(webRequest);if(result)result=auth.finish(result);}
         if(!result){json(response,404,{code:'NOT_FOUND'});return;}
-        response.writeHead(result.status,{...headers,...Object.fromEntries(result.headers)});response.end(Buffer.from(await result.arrayBuffer()));return;
+        const resultHeaders={...headers,...Object.fromEntries(result.headers)};
+        const cookies=result.headers.getSetCookie();if(cookies.length)resultHeaders['set-cookie']=cookies;
+        response.writeHead(result.status,resultHeaders);response.end(Buffer.from(await result.arrayBuffer()));return;
       }
       if(url.pathname==='/api/compare'){
         // Fail closed before reading any body. Do not mistake a browser flag for authentication.

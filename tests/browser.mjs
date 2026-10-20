@@ -85,7 +85,7 @@ try{
   assert.equal(await page.locator('.checklist-row input[type=text]').inputValue(),'Return the blue notebook');
  });
  await check('Free AI requires hosted sign-in in the local preview',async()=>{
-  await page.locator('#ai-button').click();await page.waitForFunction(()=>document.querySelector('#service-status').textContent.includes('local preview'));
+  await page.locator('#ai-button').click();await page.waitForFunction(()=>document.querySelector('#service-status').textContent.includes('Email accounts are being set up'));
   assert.equal(await page.locator('#ai-run').isDisabled(),true);
   assert.match(await page.locator('.free-ai-panel').textContent(),/No subscription or payment details/);
   assert.equal(await page.locator('#subscribe-button').count(),0);

@@ -1,7 +1,7 @@
 # Validation — 20 October 2026
 
-This release adds a SnapBack login page backed by Sites/ChatGPT authentication and direct photo upload. Five auth tests cover safe return paths, anonymous and signed-in states, private session responses, forged local identity headers and method rejection. Existing tests cover local storage/backup validation, free Groq comparison, consent, quotas, disabled payments and server file protection.
+41 automated tests and syntax checks passed for the separate email/password integration. Auth checks cover safe redirects, required project settings, ignored ChatGPT/forged identities, same-origin POST, bounded forms, password validation, confirmation, generic account messages, quotas, reset callbacks, server-verified identity, secure cookie headers and sign-out. A test exercises the actual Supabase SSR SDK with an isolated Auth-server fixture; other account tests isolate failures with fake SDK responses. No test sends real email or creates a real account.
 
-All 30 automated tests and syntax checks passed. Browser checks verify the login screen, mobile layout and direct upload/preview/save flow. The secure identity provider remains Sites; no separate password database or simulated login is created. Signing in does not sync or segregate the browser-local library.
+Browser checks verify sign-in, account creation and reset modes, pending-setup messaging, disabled credential fields before configuration and mobile layout. The prior upload/save/reload check remains valid; photo storage and camera code are unchanged apart from the AI account-status message.
 
-The Groq adapter previously completed a real identical-photo comparison. This release uses deterministic provider fixtures rather than consuming more shared capacity. Physical camera behavior varies by device.
+The production build uses Sites packaging. **Real registration, email delivery, reset and authenticated AI remain unverified until the owner connects/configures Supabase.** Published forms must not be described as activated while setup is pending. Groq previously completed a real identical-photo comparison; this release uses deterministic fixtures.

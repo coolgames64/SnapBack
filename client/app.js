@@ -219,7 +219,7 @@ async function refreshAIStatus(){
     const status=await response.json();
     aiReady=!!status.configured&&!!status.signedIn;
     $('#ai-sign-in').hidden=!status.authAvailable||!!status.signedIn;
-    $('#service-status').textContent=!status.authAvailable?'Use the hosted SnapBack app for free AI. This local preview has no sign-in service.':!status.configured?'Groq is temporarily unavailable. Your library and manual comparison are ready to use.':!status.signedIn?'Sign in to use free AI. No subscription or payment details needed.':'Free AI is ready. Review your photos and agree to share them below.';
+    $('#service-status').textContent=!status.authAvailable?'Email accounts are being set up. Free AI will be available after account setup.':!status.configured?'Groq is temporarily unavailable. Your library and manual comparison are ready to use.':!status.signedIn?'Sign in to use free AI. No subscription or payment details needed.':'Free AI is ready. Review your photos and agree to share them below.';
     updateAIButton();
   }catch(error){aiReady=false;updateAIButton();$('#service-status').textContent=error.message;}
 }

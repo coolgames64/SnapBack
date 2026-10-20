@@ -1,12 +1,16 @@
 import {env} from 'cloudflare:workers';
-import {createAuthHandler} from '../../../auth.mjs';
+import {createAuthContext} from '../../../auth.mjs';
 import {createAIHandler} from '../../../ai-api.mjs';
 export const dynamic='force-dynamic';
 async function handle(request:Request){
-  // Sites dispatch establishes identity; never read an identity from the request body.
-  const id=request.headers.get('oai-authenticated-user-id');
-  const email=request.headers.get('oai-authenticated-user-email');
-  const handler=createAIHandler({env,user:id?{id,email}:null});
-  return await createAuthHandler({user:id?{id,email}:null})(request)||await handler(request)||new Response('Not found',{status:404});
+ const auth=createAuthContext({request,env});
+ const accountResponse=await auth.handle();if(accountResponse)return accountResponse;
+ try{
+  // Supabase verifies the cookie with its Auth server. ChatGPT headers are not used.
+  const user=new URL(request.url).pathname==='/api/ai/compare'?await auth.getUser():null;
+  const statusUser=new URL(request.url).pathname==='/api/ai/status'?await auth.getUser():user;
+  const result=await createAIHandler({env,user:statusUser,authAvailable:auth.configured})(request);
+  return auth.finish(result||new Response('Not found',{status:404}));
+ }catch{return auth.finish(Response.json({message:'Account verification is temporarily unavailable.'},{status:503}));}
 }
 export const GET=handle;export const POST=handle;

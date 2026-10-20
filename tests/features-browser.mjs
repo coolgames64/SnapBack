@@ -23,7 +23,7 @@ try{
  assert.equal(await page.locator('#camera-guide-control').isVisible(),true);await page.locator('#camera-guide-toggle').uncheck();assert.equal(await page.locator('#camera-guide').isVisible(),false);
  const track=await page.evaluateHandle(()=>document.querySelector('#camera-video').srcObject.getVideoTracks()[0]);await page.keyboard.press('Escape');
  await page.waitForFunction(()=>document.querySelector('#camera-video').srcObject===null);assert.equal(await track.evaluate(t=>t.readyState),'ended');console.log('PASS reference overlay and camera stops on cancel');
- await page.locator('#ai-button').click();await page.waitForFunction(()=>document.querySelector('#service-status').textContent.includes('local preview'));
+ await page.locator('#ai-button').click();await page.waitForFunction(()=>document.querySelector('#service-status').textContent.includes('Email accounts are being set up'));
  await page.evaluate(()=>localStorage.setItem('snapback_plus','true'));await page.locator('#refresh-ai-status').click();assert.equal(await page.locator('#ai-run').isDisabled(),true);await page.locator('#ai-dialog [data-close]').click();
  console.log('PASS browser flag cannot bypass hosted sign-in');
  await page.addInitScript(()=>{navigator.mediaDevices.getUserMedia=async()=>{throw new DOMException('denied','NotAllowedError');};});

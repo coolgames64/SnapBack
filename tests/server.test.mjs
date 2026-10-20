@@ -11,7 +11,8 @@ test('serves app and fails closed for AI, private files and invalid methods',asy
   assert.equal((await fetch(base+'/app.js')).status,200);
   const login=await fetch(base+'/login');assert.equal(login.status,200);assert.match(await login.text(),/Welcome to/);
   assert.equal((await fetch(base+'/login.js')).status,200);
-  const session=await(await fetch(base+'/api/auth/session',{headers:{'oai-authenticated-user-id':'forged'}})).json();assert.equal(session.authenticated,false);assert.equal(session.authAvailable,false);
+  const session=await(await fetch(base+'/api/auth/session',{headers:{'oai-authenticated-user-id':'forged'}})).json();assert.equal(session.authenticated,false);assert.equal(session.authAvailable,false);assert.equal(session.provider,'email');
+  const loginAttempt=await fetch(base+'/api/auth/signin',{method:'POST',headers:{Origin:base,'content-type':'application/json'},body:JSON.stringify({email:'fixture@example.test',password:'fixture-password-only'})});assert.equal(loginAttempt.status,503);assert.equal((await loginAttempt.json()).code,'AUTH_SETUP_REQUIRED');
   assert.equal((await fetch(base+'/api/auth/unknown')).status,404);
   assert.equal((await fetch(base+'/assets/coffee.jpg')).status,200);
   const status=await fetch(base+'/api/ai/status');assert.equal(status.status,200);const state=await status.json();assert.equal(state.authAvailable,false);assert.equal(state.signedIn,false);assert.equal(state.free,true);
