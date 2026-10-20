@@ -42,7 +42,7 @@ export function createServer() {
       let pathname;
       try{pathname=decodeURIComponent(url.pathname);}catch{json(response,400,{code:'BAD_PATH'});return;}
       if(pathname.includes('\0')||pathname.split('/').some(part=>part.startsWith('.'))){json(response,404,{code:'NOT_FOUND'});return;}
-      const filename=path.resolve(root,`.${pathname==='/'?'/index.html':pathname==='/login'||pathname==='/login/'?'/login.html':pathname}`);
+      const filename=path.resolve(root,`.${pathname==='/'?'/index.html':pathname==='/login'||pathname==='/login/'?'/login.html':pathname==='/instructions'||pathname==='/instructions/'?'/instructions.html':pathname}`);
       if(!filename.startsWith(root+path.sep)){json(response,404,{code:'NOT_FOUND'});return;}
       try{
         if(!(await stat(filename)).isFile())throw new Error('Not a file');

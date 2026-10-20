@@ -226,6 +226,8 @@ async function refreshAIStatus(){
 function showAI(){
   const s=active();if(!s)return;aiSnapshot={id:s.id,reference:s.reference,current:s.current};
   $('#ai-reference').src=s.reference;$('#ai-current').hidden=!s.current;
+  $('#ai-current-empty').hidden=!!s.current;
+  $('#ai-add-current-label').textContent=s.current?'Replace current photo':'Add current photo';
   if(s.current)$('#ai-current').src=s.current;else $('#ai-current').removeAttribute('src');
   $('#ai-consent').checked=false;aiReady=false;updateAIButton();
   $('#ai-results').innerHTML='';$('#ai-status').textContent=s.current?'Review the two photos, then agree to share them for this comparison.':'Add a current photo to this setup first.';
@@ -383,10 +385,10 @@ function wireEvents() {
   };
   $('#ai-consent').onchange=updateAIButton;$('#ai-run').onclick=startAI;$('#refresh-ai-status').onclick=refreshAIStatus;
   $('#ai-button').onclick=showAI;$('#backup-button').onclick=showBackup;$('#mobile-backup-button').onclick=showBackup;
-  $('#help-button').onclick=()=>openInfo('A good reset starts here.',`<h3>01 / Remember</h3><p>Choose New setup, add a reference photo, and give it a name. Use your camera on mobile or upload a photo. Photos are resized to 1,600 pixels and saved in this browser.</p><h3>02 / Compare</h3><p>Add a current photo from roughly the same angle. Drag the slider, or focus it and use the arrow keys, to compare it with your reference.</p><h3>03 / Reset</h3><p>Add checklist steps, edit their text, and tick them as you go. Reset checks before your next session.</p><div class="info-callout">The starter setups are examples. AI comparison is free, with sign-in and shared usage limits. No subscription or payment details are needed. With your agreement, it sends the two selected photos to Groq and suggests changes for you to review. Your manual comparison, camera and checklists stay free. Use Backup & storage to export your library.</div><p>Example photos from <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer">Unsplash</a>. See the source README for individual photo links.</p>`);
+  $('#ai-add-current').onclick=()=>{$('#ai-dialog').close();openPhotoPicker('current');};
 }
 function openPhotoPicker(kind) {
-  openInfo(kind==='current'?'Capture the here and now.':'Update your reference.',`<p>${kind==='current'?'Use a similar angle and lighting to your saved reference.':'Replacing your reference also clears the current photo. Your checklist stays saved.'}</p><button class="button primary" id="picker-upload">${icon('upload')}Upload a photo</button><button class="button" id="picker-camera">${icon('camera')}Use camera</button><p>Photos are saved on this device. AI sharing is a separate choice. JPG, PNG and WebP are supported. HEIC works when your browser can decode it.</p>`);
+  openInfo(kind==='current'?'Capture the here and now.':'Update your reference.',`<p>${kind==='current'?'Use a similar angle and lighting to your saved reference. After saving, choose AI comparison to review your two photos.':'Replacing your reference also clears the current photo. Your checklist stays saved.'}</p><button class="button primary" id="picker-upload">${icon('upload')}Upload a photo</button><button class="button" id="picker-camera">${icon('camera')}Use camera</button><p>Photos are saved on this device. AI sharing is a separate choice. JPG, PNG and WebP are supported. HEIC works when your browser can decode it.</p>`);
   const input=$(`#${kind}-file`);
   $('#picker-upload').onclick=()=>{input.removeAttribute('capture');$('#info-dialog').close();input.click();};
   $('#picker-camera').onclick=()=>{$('#info-dialog').close();openCamera(kind);};

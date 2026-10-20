@@ -1,6 +1,6 @@
 # SnapBack
 
-[Open the app](https://snapback-setup-library.etant.chatgpt.site/) · [Hosting and remote updates](docs/HOSTING.md)
+[Open the app](https://snapback-setup-library.etant.chatgpt.site/) · [Photo & AI instructions](https://snapback-setup-library.etant.chatgpt.site/instructions) · [Hosting and remote updates](docs/HOSTING.md)
 
 Mobile-friendly photo setup library with a built-in camera, uploads, locally saved references, before/after slider, editable checklists and a server-only Groq vision adapter.
 
@@ -28,11 +28,15 @@ The existing full app is hosted on Sites. It depends on trusted sign-in and D1 s
 
 ## Sign-in and your own uploads
 
-Open `/login` for separate email/password accounts secured by Supabase. Sign-in, account creation, email verification, reset emails, password updates and browser sign-out are implemented with the official `@supabase/ssr` SDK. ChatGPT identity headers no longer authenticate an email account. **The free SnapBack Supabase project is created and its connection is saved. Confirmation URLs and email delivery must be configured before setting `SUPABASE_AUTH_READY=true`; until then, forms stay disabled with an honest setup message.** See [account setup](docs/EMAIL-ACCOUNTS.md).
+Open `/login` for separate email/password accounts secured by Supabase. Sign-in, account creation, email verification, reset emails, password updates and browser sign-out are implemented with the official `@supabase/ssr` SDK. ChatGPT identity headers no longer authenticate an email account. **The hosted SnapBack account service is active. AgentMail Free SMTP delivered a real confirmation email during setup. For your own deployment, configure confirmation URLs and email delivery before setting `SUPABASE_AUTH_READY=true`; until then, forms stay disabled.** See [account setup](docs/EMAIL-ACCOUNTS.md).
 
 The server verifies identity with Supabase's Auth server before AI access. Cookies are HttpOnly, Secure on HTTPS, SameSite=Lax and never cached. Passwords and tokens are never returned to browser scripts or stored in the photo library. Account actions require same-origin requests, bounded JSON, provider validation and hashed-email usage counters in D1. Local preview ignores identity headers and also requires the configured backend and D1 binding for account activation.
 
 Use **Upload photo** in the library header, or drop an image onto the welcome strip. Choose an image, review its preview, name the setup, then save. Camera capture and current/reference replacement remain available. Uploads do not require sign-in and stay in this browser. Signing in or out does not move, sync, isolate or erase the device's existing library; use separate browser profiles for separate local libraries.
+
+## Add a current photo and use AI
+
+The in-app `/instructions` guide explains the full camera/upload, current-photo, AI and checklist flow. Open a setup, choose **Add current**, upload or capture a fresh photo, then choose **AI comparison**. The AI dialog also has an **Add current photo** (or **Replace current photo**) button. Read the sharing notice, sign in with a verified account, and agree before comparing. No images are sent to Groq by the guide or by selecting a photo.
 
 ## No subscriptions
 
@@ -48,6 +52,6 @@ The adapter has no Google or paid-provider fallback. Application usage counters 
 
 ## Source
 
-`client/` contains the library, camera and comparison UI. `server.mjs` is the dependency-free preview. `ai-api.mjs` handles free AI, trusted authentication and quota enforcement. `groq.mjs` validates vision requests/results. `app/`, `build/` and `scripts/` retain Sites/Vinext hosting integration. `db/` and `drizzle/` contain schema and migrations.
+`client/` contains the library, camera and comparison UI. `server.mjs` is the local preview. `ai-api.mjs` handles free AI, trusted authentication and quota enforcement. `groq.mjs` validates vision requests/results. `app/`, `build/` and `scripts/` retain Sites/Vinext hosting integration. `db/` and `drizzle/` contain schema and migrations.
 
 Bundled example photos: [coffee](https://images.unsplash.com/photo-1442512595331-e89e73853f31), [workspace](https://images.unsplash.com/photo-1497215728101-856f4ea42174), [living room](https://images.unsplash.com/photo-1600210492486-724fe5c67fb0), under the [Unsplash licence](https://unsplash.com/license).
