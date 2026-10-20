@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1792404506332,
+      "tag": "0000_elite_bloodstorm",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1792405637918,
+      "tag": "0001_sweet_dreaming_celestial",
+      "breakpoints": true
+    }
+  ]
+}

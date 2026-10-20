@@ -1,0 +1,21 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {once} from 'node:events';
+import {createServer} from '../server.mjs';
+test('serves app and fails closed for AI, private files and invalid methods',async t=>{
+  const server=createServer();server.listen(0,'127.0.0.1');await once(server,'listening');
+  t.after(()=>new Promise(resolve=>server.close(resolve)));
+  const base=`http://127.0.0.1:${server.address().port}`;
+  const home=await fetch(base);assert.equal(home.status,200);assert.match(await home.text(),/SnapBack/);
+  assert.match(home.headers.get('content-security-policy'),/connect-src 'self'/);
+  assert.equal((await fetch(base+'/app.js')).status,200);
+  assert.equal((await fetch(base+'/assets/coffee.jpg')).status,200);
+  const status=await fetch(base+'/api/billing/status');assert.equal(status.status,200);assert.equal((await status.json()).aiConfigured,false);
+  assert.equal((await fetch(base+'/api/ai/compare',{method:'POST'})).status,403);
+  const stub=await fetch(base+'/api/compare',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+  assert.equal(stub.status,503);assert.equal((await stub.json()).code,'AI_NOT_CONFIGURED');
+  const cross=await fetch(base+'/api/compare',{method:'POST',headers:{Origin:'https://another-site.test'}});assert.equal(cross.status,403);
+  assert.equal((await fetch(base+'/api/compare')).status,405);
+  for(const file of ['/.env','/server.mjs','/package.json','/%2eenv','/assets/%2e%2e/.env'])assert.equal((await fetch(base+file)).status,404);
+  assert.equal((await fetch(base+'/app.js',{method:'POST'})).status,405);
+});
