@@ -3,6 +3,7 @@ import http from 'node:http';
 import {readFile, stat} from 'node:fs/promises';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import path from 'node:path';
+import {createAuthHandler} from './auth.mjs';
 import {createAIHandler} from './ai-api.mjs';
 
 const root=path.resolve(fileURLToPath(new URL('./client/',import.meta.url)));
@@ -18,10 +19,11 @@ export function createServer() {
   return http.createServer(async(request,response)=>{
     try{
       const url=new URL(request.url,'http://localhost');
-      if(url.pathname.startsWith('/api/billing/')||url.pathname.startsWith('/api/ai/')){
+      if(url.pathname.startsWith('/api/auth/')||url.pathname.startsWith('/api/billing/')||url.pathname.startsWith('/api/ai/')){
         // The simple local server deliberately has no trusted identity; headers from local clients are never trusted.
         const webRequest=new Request(`http://${request.headers.host}${request.url}`,{method:request.method,headers:request.headers});
-        const result=await createAIHandler({env:process.env,user:null,authAvailable:false})(webRequest);
+        const result=await createAuthHandler({authAvailable:false})(webRequest)||await createAIHandler({env:process.env,user:null,authAvailable:false})(webRequest);
+        if(!result){json(response,404,{code:'NOT_FOUND'});return;}
         response.writeHead(result.status,{...headers,...Object.fromEntries(result.headers)});response.end(Buffer.from(await result.arrayBuffer()));return;
       }
       if(url.pathname==='/api/compare'){
@@ -35,7 +37,7 @@ export function createServer() {
       let pathname;
       try{pathname=decodeURIComponent(url.pathname);}catch{json(response,400,{code:'BAD_PATH'});return;}
       if(pathname.includes('\0')||pathname.split('/').some(part=>part.startsWith('.'))){json(response,404,{code:'NOT_FOUND'});return;}
-      const filename=path.resolve(root,`.${pathname==='/'?'/index.html':pathname}`);
+      const filename=path.resolve(root,`.${pathname==='/'?'/index.html':pathname==='/login'||pathname==='/login/'?'/login.html':pathname}`);
       if(!filename.startsWith(root+path.sep)){json(response,404,{code:'NOT_FOUND'});return;}
       try{
         if(!(await stat(filename)).isFile())throw new Error('Not a file');

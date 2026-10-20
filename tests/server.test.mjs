@@ -9,6 +9,10 @@ test('serves app and fails closed for AI, private files and invalid methods',asy
   const home=await fetch(base);assert.equal(home.status,200);assert.match(await home.text(),/SnapBack/);
   assert.match(home.headers.get('content-security-policy'),/connect-src 'self'/);
   assert.equal((await fetch(base+'/app.js')).status,200);
+  const login=await fetch(base+'/login');assert.equal(login.status,200);assert.match(await login.text(),/Welcome to/);
+  assert.equal((await fetch(base+'/login.js')).status,200);
+  const session=await(await fetch(base+'/api/auth/session',{headers:{'oai-authenticated-user-id':'forged'}})).json();assert.equal(session.authenticated,false);assert.equal(session.authAvailable,false);
+  assert.equal((await fetch(base+'/api/auth/unknown')).status,404);
   assert.equal((await fetch(base+'/assets/coffee.jpg')).status,200);
   const status=await fetch(base+'/api/ai/status');assert.equal(status.status,200);const state=await status.json();assert.equal(state.authAvailable,false);assert.equal(state.signedIn,false);assert.equal(state.free,true);
   assert.equal((await fetch(base+'/api/billing/checkout',{method:'POST'})).status,410);

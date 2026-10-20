@@ -169,7 +169,7 @@ async function readDraft(file) {
   if(!file)return;
   const generation=++draftGeneration;
   photoBusy=true;$('#save-setup').disabled=true;$('#form-error').textContent='Preparing your photo…';
-  try {const reference=await imageFromFile(file);if(generation===draftGeneration){draftReference=reference;renderDraft();$('#form-error').textContent='';}}
+  try {const reference=await imageFromFile(file);if(generation===draftGeneration){draftReference=reference;if(!editingId&&!$('#setup-name').value.trim())$('#setup-name').value=file.name.replace(/\.[^.]+$/,'').replace(/[-_]+/g,' ').slice(0,70);renderDraft();$('#form-error').textContent='';}}
   catch(error){if(generation===draftGeneration)$('#form-error').textContent=error.message;}
   finally{if(generation===draftGeneration){photoBusy=false;$('#save-setup').disabled=false;}}
 }
@@ -340,6 +340,11 @@ function wireEvents() {
       setView('library');renderAll();toast('Setup copied. Rename it or add a new reference.');
     }catch(error){report(error);}
   };
+  $('#upload-setup').onclick=()=>{openSetup();$('#setup-file').click();};
+  const libraryDrop=$('#library-drop');
+  ['dragenter','dragover'].forEach(type=>libraryDrop.addEventListener(type,event=>{event.preventDefault();libraryDrop.classList.add('dragging');}));
+  ['dragleave','drop'].forEach(type=>libraryDrop.addEventListener(type,event=>{event.preventDefault();libraryDrop.classList.remove('dragging');}));
+  libraryDrop.addEventListener('drop',event=>{const file=event.dataTransfer.files[0];if(file){openSetup();readDraft(file);}});
   $('#new-setup').onclick=()=>openSetup();$('#edit-setup').onclick=()=>openSetup(active());
   $('#choose-photo').onclick=()=>$('#setup-file').click();$('#take-photo').onclick=()=>openCamera('draft');
   ['#setup-file','#camera-file'].forEach(id=>$(id).onchange=async event=>{await readDraft(event.target.files[0]);event.target.value='';});
@@ -388,6 +393,7 @@ function openPhotoPicker(kind) {
 }
 async function init() {
   hydrateIcons();wireEvents();
+  fetch('/api/auth/session',{cache:'no-store',signal:AbortSignal.timeout(10000)}).then(r=>r.ok?r.json():null).then(session=>{if(session?.authenticated){$('#account-link').textContent='My account ↗';$('#account-link').setAttribute('aria-label','Open your SnapBack account');}}).catch(()=>{});
   try{
     db=await openDatabase();setups=await loadLibrary(db);setups.sort((a,b)=>b.createdAt-a.createdAt);
     selectedId=setups[0]?.id||null;renderAll();

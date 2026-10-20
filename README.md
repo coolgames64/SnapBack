@@ -25,6 +25,12 @@ npm run build
 
 The existing full app is hosted on Sites. It depends on trusted sign-in and D1 storage. GitHub stores the source; GitHub Pages alone cannot run the AI backend. See the hosting guide before deploying elsewhere.
 
+## Sign-in and your own uploads
+
+Open `/login` for SnapBack's own sign-in screen, backed by secure ChatGPT sign-in on Sites. It shows your signed-in account and offers sign-out. The local preview explains that hosted sign-in is unavailable; it never accepts passwords or trusts browser-supplied identities. Return paths are restricted to the library, and the session endpoint is not cached.
+
+Use **Upload photo** in the library header, or drop an image onto the welcome strip. Choose an image, review its preview, name the setup, then save. Camera capture and current/reference replacement remain available. Uploads do not require sign-in and stay in this browser. Signing in or out does not move, sync, isolate or erase the device's existing library; use separate browser profiles for separate local libraries.
+
 ## No subscriptions
 
 SnapBack currently has no checkout, subscription, price or payment provider. All legacy payment endpoints return `410 PAYMENTS_DISABLED`. Historical database migrations remain unchanged for existing installations; their old billing table is unused.

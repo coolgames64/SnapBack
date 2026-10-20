@@ -1,9 +1,7 @@
 # Validation — 20 October 2026
 
-Subscriptions are deferred. The app offers free Groq comparison with hosted sign-in, fresh consent and shared quotas. Tests cover disabled legacy payment endpoints, anonymous and cross-origin rejection, configuration failures, validation before quota reservation, quota rejection, hashed member identity and a successful comparison using a mocked provider response. No test creates a payment.
+This release adds a SnapBack login page backed by Sites/ChatGPT authentication and direct photo upload. Five auth tests cover safe return paths, anonymous and signed-in states, private session responses, forged local identity headers and method rejection. Existing tests cover local storage/backup validation, free Groq comparison, consent, quotas, disabled payments and server file protection.
 
-Groq adapter tests cover image validation, bounded JSON, fixed endpoint/model, two images, server-only authorization, output validation and real SQLite quota queries. A real identical-photo Groq comparison succeeded during an earlier release; this release uses deterministic provider fixtures to verify the newly connected endpoint without consuming more shared capacity.
+All 30 automated tests and syntax checks passed. Browser checks verify the login screen, mobile layout and direct upload/preview/save flow. The secure identity provider remains Sites; no separate password database or simulated login is created. Signing in does not sync or segregate the browser-local library.
 
-The simple local preview rejects forged identity headers. Existing camera, local library, checklist and slider flows remain available. Physical camera behavior varies by device.
-
-Validation for this release: all 25 automated tests and JavaScript syntax checks passed. The production bundle was built with the Sites packaging helper. Browser fixture scripts were updated for the new free-AI status contract; their earlier camera tests were not rerun in this release.
+The Groq adapter previously completed a real identical-photo comparison. This release uses deterministic provider fixtures rather than consuming more shared capacity. Physical camera behavior varies by device.
