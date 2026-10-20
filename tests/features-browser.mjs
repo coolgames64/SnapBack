@@ -1,4 +1,4 @@
-// Tests use fake camera frames and mocked subscription responses, never real charges.
+// Tests use fake camera frames and mocked free-AI responses, never real charges.
 import assert from 'node:assert/strict';import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url);const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM?{executablePath:process.env.PLAYWRIGHT_CHROMIUM}:{}),args:['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream']});
@@ -23,15 +23,15 @@ try{
  assert.equal(await page.locator('#camera-guide-control').isVisible(),true);await page.locator('#camera-guide-toggle').uncheck();assert.equal(await page.locator('#camera-guide').isVisible(),false);
  const track=await page.evaluateHandle(()=>document.querySelector('#camera-video').srcObject.getVideoTracks()[0]);await page.keyboard.press('Escape');
  await page.waitForFunction(()=>document.querySelector('#camera-video').srcObject===null);assert.equal(await track.evaluate(t=>t.readyState),'ended');console.log('PASS reference overlay and camera stops on cancel');
- await page.locator('#ai-button').click();await page.waitForFunction(()=>document.querySelector('#billing-status').textContent.includes('pending'));
- await page.evaluate(()=>localStorage.setItem('snapback_plus','true'));await page.locator('#refresh-subscription').click();assert.equal(await page.locator('#ai-run').isDisabled(),true);await page.locator('#ai-dialog [data-close]').click();
- console.log('PASS browser subscription flag cannot unlock AI');
+ await page.locator('#ai-button').click();await page.waitForFunction(()=>document.querySelector('#service-status').textContent.includes('local preview'));
+ await page.evaluate(()=>localStorage.setItem('snapback_plus','true'));await page.locator('#refresh-ai-status').click();assert.equal(await page.locator('#ai-run').isDisabled(),true);await page.locator('#ai-dialog [data-close]').click();
+ console.log('PASS browser flag cannot bypass hosted sign-in');
  await page.addInitScript(()=>{navigator.mediaDevices.getUserMedia=async()=>{throw new DOMException('denied','NotAllowedError');};});
  await page.reload();await page.locator('.setup-card').first().waitFor();await page.locator('#upload-current').click();await page.locator('#picker-camera').click();
  await page.waitForFunction(()=>document.querySelector('#camera-status').textContent.includes('denied'));assert.equal(await page.locator('#camera-upload').isVisible(),true);await page.locator('#camera-dialog [data-close]').click();
  console.log('PASS camera denial provides a working upload fallback');
- // Isolated test-only replies simulate a subscriber and Groq report; no live AI call.
- await page.route('**/api/billing/status',r=>r.fulfill({json:{configured:true,signedIn:true,active:true,aiConfigured:true}}));
+ // Isolated test-only replies simulate a signed-in free user and Groq report; no live AI call.
+ await page.route('**/api/ai/status',r=>r.fulfill({json:{configured:true,signedIn:true,authAvailable:true,free:true}}));
  await page.route('**/api/ai/compare',async r=>{
   const body=r.request().postDataJSON();assert.equal(body.consent,true);assert.match(body.reference,/^data:image\/jpeg;base64,/);
   await r.fulfill({json:{provider:'Groq',comparable:true,summary:'Test fixture: a cup may be missing.',limitations:['Check the photo yourself.'],changes:[{label:'Cup',observation:'Test fixture: one fewer cup is visible.',action:'Check and replace the cup.',caution:'It may be hidden.',confidence:'medium'}]}});

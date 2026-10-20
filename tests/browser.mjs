@@ -84,10 +84,11 @@ try{
   assert.equal(await page.locator('#comparison-empty').isVisible(),false);
   assert.equal(await page.locator('.checklist-row input[type=text]').inputValue(),'Return the blue notebook');
  });
- await check('AI requires a verified subscription and fails closed while Klarna setup is pending',async()=>{
-  await page.locator('#ai-button').click();await page.waitForFunction(()=>document.querySelector('#billing-status').textContent.includes('pending'));
-  assert.equal(await page.locator('#ai-run').isDisabled(),true);assert.equal(await page.locator('#subscribe-button').isDisabled(),true);
-  assert.match(await page.locator('#subscription-panel').textContent(),/£4.99/);
+ await check('Free AI requires hosted sign-in in the local preview',async()=>{
+  await page.locator('#ai-button').click();await page.waitForFunction(()=>document.querySelector('#service-status').textContent.includes('local preview'));
+  assert.equal(await page.locator('#ai-run').isDisabled(),true);
+  assert.match(await page.locator('.free-ai-panel').textContent(),/No subscription or payment details/);
+  assert.equal(await page.locator('#subscribe-button').count(),0);
   await page.locator('#ai-dialog [data-close]').click();
  });
  await check('edit setup and checklist overview',async()=>{

@@ -23,6 +23,7 @@ export async function readAIRequest(request){
  while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>MAX_BODY){await reader.cancel();throw new AIError('Photos are too large. Please choose smaller images.',413,'PHOTOS_TOO_LARGE');}chunks.push(value);}
  const bytes=new Uint8Array(size);let offset=0;for(const c of chunks){bytes.set(c,offset);offset+=c.length;}
  let body;try{body=JSON.parse(new TextDecoder().decode(bytes));}catch{throw new AIError('Invalid photo comparison request.',400,'INVALID_REQUEST');}
+ if(!body||typeof body!=='object'||Array.isArray(body))throw new AIError('Invalid photo comparison request.',400,'INVALID_REQUEST');
  if(body.consent!==true)throw new AIError('Agree to send these two photos to Groq before comparing.',400,'CONSENT_REQUIRED');
  return {reference:parsePhoto(body.reference),current:parsePhoto(body.current)};
 }

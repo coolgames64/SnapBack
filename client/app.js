@@ -209,29 +209,27 @@ async function replacePhoto(file, kind) {
     toast(kind==='current'?'Current photo saved. Drag the slider to compare.':'New reference saved. Add a new current photo to compare.');
   }catch(error){report(error);}
 }
-let aiSnapshot=null,aiBusy=false,aiEntitled=false;
-function updateAIButton(){ $('#ai-run').disabled=!aiEntitled||!aiSnapshot?.current||aiBusy||!$('#ai-consent').checked; }
-async function refreshSubscription(){
-  $('#billing-status').textContent='Checking subscription…';$('#ai-run').disabled=true;
+let aiSnapshot=null,aiBusy=false,aiReady=false;
+function updateAIButton(){ $('#ai-run').disabled=!aiReady||!aiSnapshot?.current||aiBusy||!$('#ai-consent').checked; }
+async function refreshAIStatus(){
+  aiReady=false;updateAIButton();$('#service-status').textContent='Checking free AI availability…';$('#ai-sign-in').hidden=true;
   try{
-    const response=await fetch('/api/billing/status',{cache:'no-store',signal:AbortSignal.timeout(15000)});
-    if(!response.ok)throw new Error('Klarna is not connected yet. Subscriptions and AI access are not active.');
+    const response=await fetch('/api/ai/status',{cache:'no-store',signal:AbortSignal.timeout(15000)});
+    if(!response.ok)throw new Error('AI availability could not be checked. Please try again.');
     const status=await response.json();
-    $('#subscribe-button').hidden=!!status.active||!status.signedIn;$('#manage-subscription').hidden=!status.hasCustomer;$('#billing-sign-in').hidden=!status.configured||!!status.signedIn;
-    $('#subscribe-button').disabled=!status.configured||!status.aiConfigured;
-    aiEntitled=!!status.active&&!!status.aiConfigured;
-    $('#billing-status').textContent=!status.configured?'Klarna merchant setup is pending. No payment can be taken and Plus AI stays locked.':!status.aiConfigured?'Groq setup is pending. Comparisons are paused.':status.active?'SnapBack Plus is active. Groq is ready to compare your photos.':'Subscribe to unlock AI comparison. £4.99 billed monthly.';
-    $('#subscribe-button').textContent=status.configured?'Subscribe with Klarna ↗':'Klarna setup pending';
+    aiReady=!!status.configured&&!!status.signedIn;
+    $('#ai-sign-in').hidden=!status.authAvailable||!!status.signedIn;
+    $('#service-status').textContent=!status.authAvailable?'Use the hosted SnapBack app for free AI. This local preview has no sign-in service.':!status.configured?'Groq is temporarily unavailable. Your library and manual comparison are ready to use.':!status.signedIn?'Sign in to use free AI. No subscription or payment details needed.':'Free AI is ready. Review your photos and agree to share them below.';
     updateAIButton();
-  }catch(error){aiEntitled=false;updateAIButton();$('#billing-status').textContent=error.message;$('#subscribe-button').disabled=true;}
+  }catch(error){aiReady=false;updateAIButton();$('#service-status').textContent=error.message;}
 }
 function showAI(){
   const s=active();if(!s)return;aiSnapshot={id:s.id,reference:s.reference,current:s.current};
   $('#ai-reference').src=s.reference;$('#ai-current').hidden=!s.current;
   if(s.current)$('#ai-current').src=s.current;else $('#ai-current').removeAttribute('src');
-  $('#ai-consent').checked=false;aiEntitled=false;updateAIButton();
+  $('#ai-consent').checked=false;aiReady=false;updateAIButton();
   $('#ai-results').innerHTML='';$('#ai-status').textContent=s.current?'Review the two photos, then agree to share them for this comparison.':'Add a current photo to this setup first.';
-  $('#ai-dialog').showModal();refreshSubscription();
+  $('#ai-dialog').showModal();refreshAIStatus();
 }
 async function startAI(){
   if(!aiSnapshot?.current||aiBusy||!$('#ai-consent').checked)return;const snapshot={...aiSnapshot};aiBusy=true;$('#ai-run').disabled=true;$('#ai-results').innerHTML='';
@@ -251,7 +249,7 @@ async function startAI(){
       }catch(error){button.disabled=false;toast(error.message,true);}
     });
   }catch(error){$('#ai-status').textContent=error.message;}
-  finally{aiBusy=false;$('#ai-consent').checked=false;refreshSubscription();}
+  finally{aiBusy=false;$('#ai-consent').checked=false;refreshAIStatus();}
 }
 async function openCamera(kind){
   const targetId=active()?.id,editingGeneration=draftGeneration;
@@ -264,15 +262,6 @@ async function openCamera(kind){
   }else{
     try{await updateSetup(targetId,copy=>{copy[kind]=result.photo;if(kind==='reference'){copy.current=null;copy.isDemo=false;}});toast('Camera photo saved on this device');}catch(error){report(error);}
   }
-}
-async function billingAction(path){
-  $('#billing-status').textContent='Opening secure Stripe checkout…';
-  try{
-    const response=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-    const data=await response.json();if(!response.ok||!data.url)throw new Error(data.message||'Stripe is not connected yet.');
-    const url=new URL(data.url);if(url.protocol!=='https:'||!['checkout.stripe.com','billing.stripe.com'].includes(url.hostname))throw new Error('Stripe returned an unexpected checkout address.');
-    window.location.assign(url.href);
-  }catch(error){$('#billing-status').textContent=error.message;}
 }
 async function showBackup() {
   const bytes=new Blob([JSON.stringify(setups)]).size;
@@ -387,9 +376,9 @@ function wireEvents() {
       $('#confirm-dialog').close();renderAll();toast('Setup removed from this device');
     }catch(error){report(error);}finally{$('#confirm-delete').disabled=false;}
   };
-  $('#ai-consent').onchange=updateAIButton;$('#ai-run').onclick=startAI;$('#refresh-subscription').onclick=refreshSubscription;$('#subscribe-button').onclick=()=>billingAction('/api/billing/checkout');$('#manage-subscription').onclick=()=>billingAction('/api/billing/portal');
+  $('#ai-consent').onchange=updateAIButton;$('#ai-run').onclick=startAI;$('#refresh-ai-status').onclick=refreshAIStatus;
   $('#ai-button').onclick=showAI;$('#backup-button').onclick=showBackup;$('#mobile-backup-button').onclick=showBackup;
-  $('#help-button').onclick=()=>openInfo('A good reset starts here.',`<h3>01 / Remember</h3><p>Choose New setup, add a reference photo, and give it a name. Use your camera on mobile or upload a photo. Photos are resized to 1,600 pixels and saved in this browser.</p><h3>02 / Compare</h3><p>Add a current photo from roughly the same angle. Drag the slider, or focus it and use the arrow keys, to compare it with your reference.</p><h3>03 / Reset</h3><p>Add checklist steps, edit their text, and tick them as you go. Reset checks before your next session.</p><div class="info-callout">The starter setups are examples. AI comparison is available to active SnapBack Plus subscribers at £4.99/month. With your agreement, it sends the two selected photos to Groq and suggests changes for you to review. Your manual comparison, camera and checklists stay free. Use Backup & storage to export your library.</div><p>Example photos from <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer">Unsplash</a>. See the source README for individual photo links.</p>`);
+  $('#help-button').onclick=()=>openInfo('A good reset starts here.',`<h3>01 / Remember</h3><p>Choose New setup, add a reference photo, and give it a name. Use your camera on mobile or upload a photo. Photos are resized to 1,600 pixels and saved in this browser.</p><h3>02 / Compare</h3><p>Add a current photo from roughly the same angle. Drag the slider, or focus it and use the arrow keys, to compare it with your reference.</p><h3>03 / Reset</h3><p>Add checklist steps, edit their text, and tick them as you go. Reset checks before your next session.</p><div class="info-callout">The starter setups are examples. AI comparison is free, with sign-in and shared usage limits. No subscription or payment details are needed. With your agreement, it sends the two selected photos to Groq and suggests changes for you to review. Your manual comparison, camera and checklists stay free. Use Backup & storage to export your library.</div><p>Example photos from <a href="https://unsplash.com" target="_blank" rel="noopener noreferrer">Unsplash</a>. See the source README for individual photo links.</p>`);
 }
 function openPhotoPicker(kind) {
   openInfo(kind==='current'?'Capture the here and now.':'Update your reference.',`<p>${kind==='current'?'Use a similar angle and lighting to your saved reference.':'Replacing your reference also clears the current photo. Your checklist stays saved.'}</p><button class="button primary" id="picker-upload">${icon('upload')}Upload a photo</button><button class="button" id="picker-camera">${icon('camera')}Use camera</button><p>Photos are saved on this device. AI sharing is a separate choice. JPG, PNG and WebP are supported. HEIC works when your browser can decode it.</p>`);
@@ -403,10 +392,7 @@ async function init() {
     db=await openDatabase();setups=await loadLibrary(db);setups.sort((a,b)=>b.createdAt-a.createdAt);
     selectedId=setups[0]?.id||null;renderAll();
     $('#save-status').textContent='Your library is saved on this device';
-    const checkoutId=new URLSearchParams(location.search).get('checkout_session');
-    if(checkoutId){
-      try{await fetch('/api/billing/confirm?session_id='+encodeURIComponent(checkoutId),{cache:'no-store'});history.replaceState(null,'',location.pathname);showAI();}catch{toast('Payment status could not be refreshed. Open AI comparison and refresh subscription status.',true);}
-    }else if(new URLSearchParams(location.search).get('plan')==='plus'){history.replaceState(null,'',location.pathname);showAI();}
+    if(new URLSearchParams(location.search).get('ai')==='1'){history.replaceState(null,'',location.pathname);showAI();}
   }catch(error){
     report(error);$('#setup-grid').innerHTML='<div class="empty-state"><h3>We need a little space.</h3><p>Local storage could not be opened. Allow browser storage, close other SnapBack tabs, then reload. Your existing data has not been cleared.</p><button class="button primary" id="retry-storage">Try again</button></div>';
     $('#retry-storage').onclick=()=>location.reload();

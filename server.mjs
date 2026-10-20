@@ -1,9 +1,9 @@
-// Local UI preview has no trusted identity; cloud AI remains locked.
+// Local UI preview has no trusted identity; cloud AI needs hosted sign-in.
 import http from 'node:http';
 import {readFile, stat} from 'node:fs/promises';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import path from 'node:path';
-import {createBilling} from './billing.mjs';
+import {createAIHandler} from './ai-api.mjs';
 
 const root=path.resolve(fileURLToPath(new URL('./client/',import.meta.url)));
 const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.webp':'image/webp','.json':'application/json; charset=utf-8'};
@@ -19,13 +19,13 @@ export function createServer() {
     try{
       const url=new URL(request.url,'http://localhost');
       if(url.pathname.startsWith('/api/billing/')||url.pathname.startsWith('/api/ai/')){
-        // The simple local server deliberately has no fake paid account or trusted identity.
+        // The simple local server deliberately has no trusted identity; headers from local clients are never trusted.
         const webRequest=new Request(`http://${request.headers.host}${request.url}`,{method:request.method,headers:request.headers});
-        const result=await createBilling({env:process.env,user:null})(webRequest);
+        const result=await createAIHandler({env:process.env,user:null,authAvailable:false})(webRequest);
         response.writeHead(result.status,{...headers,...Object.fromEntries(result.headers)});response.end(Buffer.from(await result.arrayBuffer()));return;
       }
       if(url.pathname==='/api/compare'){
-        // Fail closed before reading any body. Do not mistake a browser flag for entitlement.
+        // Fail closed before reading any body. Do not mistake a browser flag for authentication.
         if(request.method!=='POST'){response.setHeader('Allow','POST');json(response,405,{code:'METHOD_NOT_ALLOWED'});return;}
         const origin=request.headers.origin;
         if(origin && origin!==`http://${request.headers.host}`){json(response,403,{code:'ORIGIN_REJECTED'});return;}

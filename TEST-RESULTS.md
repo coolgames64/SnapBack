@@ -1,7 +1,9 @@
 # Validation — 20 October 2026
 
-This GitHub edition removes Stripe checkout and uses a locked direct-Klarna setup boundary. Its tests verify that status never claims an active subscription, anonymous/cross-origin requests are rejected and checkout/portal/confirmation/AI remain unavailable until merchant setup and the recurring backend are implemented.
+Subscriptions are deferred. The app offers free Groq comparison with hosted sign-in, fresh consent and shared quotas. Tests cover disabled legacy payment endpoints, anonymous and cross-origin rejection, configuration failures, validation before quota reservation, quota rejection, hashed member identity and a successful comparison using a mocked provider response. No test creates a payment.
 
-Groq adapter tests cover photo validation, bounded JSON, fixed endpoint/model, two images, server-only authorization, output validation and actual SQLite quota queries. The prior Groq adapter completed a real identical-photo comparison; no new Klarna payment or live charge was created. No Klarna end-to-end test is possible without merchant credentials and implementation.
+Groq adapter tests cover image validation, bounded JSON, fixed endpoint/model, two images, server-only authorization, output validation and real SQLite quota queries. A real identical-photo Groq comparison succeeded during an earlier release; this release uses deterministic provider fixtures to verify the newly connected endpoint without consuming more shared capacity.
 
-The preceding release's photo-library/camera tests remain core-flow evidence. Browser test mocks are isolated fixtures and not production entitlements. Physical camera behavior varies by device. This edition must not be described as live Klarna billing.
+The simple local preview rejects forged identity headers. Existing camera, local library, checklist and slider flows remain available. Physical camera behavior varies by device.
+
+Validation for this release: all 25 automated tests and JavaScript syntax checks passed. The production bundle was built with the Sites packaging helper. Browser fixture scripts were updated for the new free-AI status contract; their earlier camera tests were not rerun in this release.

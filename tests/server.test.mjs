@@ -10,7 +10,9 @@ test('serves app and fails closed for AI, private files and invalid methods',asy
   assert.match(home.headers.get('content-security-policy'),/connect-src 'self'/);
   assert.equal((await fetch(base+'/app.js')).status,200);
   assert.equal((await fetch(base+'/assets/coffee.jpg')).status,200);
-  const status=await fetch(base+'/api/billing/status');assert.equal(status.status,200);assert.equal((await status.json()).aiConfigured,false);
+  const status=await fetch(base+'/api/ai/status');assert.equal(status.status,200);const state=await status.json();assert.equal(state.authAvailable,false);assert.equal(state.signedIn,false);assert.equal(state.free,true);
+  assert.equal((await fetch(base+'/api/billing/checkout',{method:'POST'})).status,410);
+  assert.equal((await fetch(base+'/api/ai/compare',{method:'POST',headers:{Origin:base,'oai-authenticated-user-id':'forged'}})).status,401);
   assert.equal((await fetch(base+'/api/ai/compare',{method:'POST'})).status,403);
   const stub=await fetch(base+'/api/compare',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
   assert.equal(stub.status,503);assert.equal((await stub.json()).code,'AI_NOT_CONFIGURED');
