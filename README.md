@@ -34,6 +34,10 @@ The server verifies identity with Supabase's Auth server before AI access. Cooki
 
 Use **Upload photo** in the library header, or drop an image onto the welcome strip. Choose an image, review its preview, name the setup, then save. Camera capture and current/reference replacement remain available. Uploads do not require sign-in and stay in this browser. Signing in or out does not move, sync, isolate or erase the device's existing library; use separate browser profiles for separate local libraries.
 
+## Welcome wizard
+
+First-time visitors see a five-step guide after their local library loads. Next/Back explain references, current photos, AI and checklists. The final action opens New setup. Skip, Close and Escape dismiss the guide and remember that preference in this browser. Reopen it from **Quick tour** in the library or via `/?tour=1`. Returning from AI sign-in opens the AI window without interrupting it with the tour. If preferences cannot be saved, automatic display stays off and the manual tour remains available. The tour does not request camera access, create an account or upload photos.
+
 ## Add a current photo and use AI
 
 The in-app `/instructions` guide explains the full camera/upload, current-photo, AI and checklist flow. Open a setup, choose **Add current**, upload or capture a fresh photo, then choose **AI comparison**. The AI dialog also has an **Add current photo** (or **Replace current photo**) button. Read the sharing notice, sign in with a verified account, and agree before comparing. No images are sent to Groq by the guide or by selecting a photo.

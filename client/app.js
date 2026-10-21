@@ -1,5 +1,6 @@
 import {createCamera} from './camera.js';
 import {analysePhotos} from './ai.js';
+import {createWelcomeTour} from './welcome-tour.js';
 import {uid, escapeHTML as esc, progress, filterSetups, sortSetups, starterChecklist, validateBackup, openDatabase, loadLibrary, transaction, imageFromFile, MAX_BACKUP_BYTES} from './core.js';
 
 const $ = selector => document.querySelector(selector);
@@ -26,6 +27,7 @@ function hydrateIcons(root=document) { root.querySelectorAll('[data-icon]').forE
 let db, setups=[], selectedId=null, filter='All', query='', view='library', editingId=null, draftReference=null, queue=Promise.resolve(), toastTimer, photoBusy=false;
 let sortOrder='newest', comparisonMode='slider', draftGeneration=0;
 const camera=createCamera($('#camera-dialog'));
+const welcomeTour=createWelcomeTour({dialog:$('#welcome-tour-dialog'),onCreateSetup:()=>openSetup()});
 const active = () => setups.find(s => s.id === selectedId);
 function toast(message, error=false) {
   const el=$('#toast'); el.textContent=message; el.hidden=false; el.classList.toggle('error',error);
@@ -309,6 +311,7 @@ function download(name, contents, type) {
   const link=document.createElement('a');link.href=url;link.download=name;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
 function wireEvents() {
+  $('#restart-tour').onclick=welcomeTour.open;$('#welcome-tour').onclick=welcomeTour.open;
   document.querySelectorAll('[data-close]').forEach(el=>el.onclick=()=>el.closest('dialog').close());
   document.querySelectorAll('[data-view]').forEach(el=>el.onclick=()=>setView(el.dataset.view));
   $('.brand').onclick=event=>{event.preventDefault();setView('library');window.scrollTo({top:0,behavior:'smooth'});};
@@ -400,7 +403,13 @@ async function init() {
     db=await openDatabase();setups=await loadLibrary(db);setups.sort((a,b)=>b.createdAt-a.createdAt);
     selectedId=setups[0]?.id||null;renderAll();
     $('#save-status').textContent='Your library is saved on this device';
-    if(new URLSearchParams(location.search).get('ai')==='1'){history.replaceState(null,'',location.pathname);showAI();}
+    const params=new URLSearchParams(location.search);
+    if(params.get('ai')==='1'){history.replaceState(null,'',location.pathname);showAI();}
+    else{
+      const forceTour=params.get('tour')==='1';
+      if(forceTour){params.delete('tour');history.replaceState(null,'',location.pathname+(params.size?`?${params}`:'')+location.hash);}
+      welcomeTour.maybeOpen(forceTour);
+    }
   }catch(error){
     report(error);$('#setup-grid').innerHTML='<div class="empty-state"><h3>We need a little space.</h3><p>Local storage could not be opened. Allow browser storage, close other SnapBack tabs, then reload. Your existing data has not been cleared.</p><button class="button primary" id="retry-storage">Try again</button></div>';
     $('#retry-storage').onclick=()=>location.reload();
